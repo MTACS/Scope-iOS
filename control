@@ -1,0 +1,9 @@
+Package: com.mtac.scope
+Name: Scope
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome application!
+Maintainer: MTAC
+Author: MTAC
+Section: Utilities
+
