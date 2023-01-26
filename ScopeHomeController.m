@@ -1,10 +1,10 @@
-#import "SCRootViewController.h"
+#import "ScopeHomeController.h"
 
-@interface SCRootViewController ()
+@interface ScopeHomeController ()
 @property (nonatomic, strong) UITableView *table;
 @end
 
-@implementation SCRootViewController
+@implementation ScopeHomeController
 - (void)loadView {
     [super loadView];
 
@@ -54,5 +54,9 @@
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+- (NSString *)tableView:(UITableView *)tableView 
+titleForHeaderInSection:(NSInteger)section {
+    return @"14.8";
 }
 @end
