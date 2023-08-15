@@ -7,6 +7,8 @@
 @end
 
 @implementation ScopeSearchController
+@synthesize progressView;
+@synthesize progressItem;
 - (void)loadView {
     [super loadView];
 
@@ -18,24 +20,34 @@
     self.table.dataSource = self;
     [self.view addSubview:self.table];
 
-	self.searchResults = [NSMutableArray new];
+	self.headerResults = [NSMutableArray new];
+      self.frameworkResults = [NSMutableArray new];
 
 	self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.navigationController];
 	self.searchController.delegate = self;
 	self.searchController.searchBar.delegate = self;
-	self.searchController.hidesNavigationBarDuringPresentation = NO;
+	self.searchController.hidesNavigationBarDuringPresentation = YES;
 	
 	self.navigationItem.searchController = self.searchController;
 
 	self.progressView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
 	self.progressItem = [[UIBarButtonItem alloc] initWithCustomView:self.progressView];
-	
+      [self.progressView startAnimating];
+	self.navigationItem.rightBarButtonItems = @[progressItem];
 }
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	return 1;
+	return 2:
 }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	return 10;
+      NSInteger rows = 0;
+      if (self.searching) {
+            if (section == 0) {
+                  rows = self.headerResults.count;
+            } else if (section == 1) {
+                  rows = self.frameworkResults.count;
+            }
+      }
+	return rows;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	static NSString *CellIdentifier = @"Cell";
@@ -44,7 +56,18 @@
 	if (!cell) {
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
 	}
-	cell.textLabel.text = @"test";
+
+      NSString *cellTitle;
+      UIImage *cellIcon;
+	
+      UIListContentConfiguration *content = [cell defaultContentConfiguration];
+    [content setImage:cellIcon];
+    [content setText:cellTitle];
+    [content setSecondaryText:@"Test"];
+    [content.secondaryTextProperties setColor:[UIColor secondaryLabelColor]];
+    [content.secondaryTextProperties setFont:[UIFont systemFontOfSize:12]];
+    [cell setContentConfiguration:content];
+
 	return cell;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -62,7 +85,8 @@
 	}
 }
 - (void)search:(NSString *)query {
-	[self.searchResults removeAllObjects];
+	[self.headerResults removeAllObjects];
+      [self.frameworkResults removeAllObjects];
     NSMutableArray *headers = [NSMutableArray new];
 	NSMutableArray *frameworks = [NSMutableArray new];
 
@@ -73,11 +97,11 @@
 
 	while ((file = [enumerator nextObject])) {
 		if ([[file pathExtension] isEqualToString:@"h"]) {
-			if ([file.lowercaseString containsString:string.lowercaseString]) {
+			if ([file.lowercaseString containsString:query.lowercaseString]) {
 				[headers addObject:file];
 			}
 		} else if ([[file pathExtension] isEqualToString:@"framework"]) {
-			if ([file.lowercaseString containsString:string.lowercaseString]) {
+			if ([file.lowercaseString containsString:query.lowercaseString]) {
 				[frameworks addObject:file];
 			}
 		}
@@ -88,13 +112,14 @@
 
 	self.searching = YES;
 	[_table reloadData];
-    [self updateTitleButtons];
+    // [self updateTitleButtons];
 }
 - (void)cancelSearch {
 	self.searching = NO;
 	[_table reloadData];
-	[self.searchResults removeAllObjects];
-    [self updateTitleButtons];
+	[self.headerResults removeAllObjects];
+      [self.frameworkResults removeAllObjects];
+    // [self updateTitleButtons];
 }
 - (void)updateTitleButtons {
 	if (self.searching) {

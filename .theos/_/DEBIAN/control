@@ -1,9 +1,0 @@
-Package: com.mtac.scope
-Name: Scope
-Architecture: iphoneos-arm
-Description: An awesome application!
-Maintainer: MTAC
-Author: MTAC
-Section: Utilities
-Version: 0.0.1-1+debug
-Installed-Size: 1464

@@ -18,7 +18,7 @@
         self.searchController = [[UISearchController alloc] initWithSearchResultsController:self.navigationController];
 		self.searchController.delegate = self;
 		self.searchController.searchBar.delegate = self;
-		self.searchController.hidesNavigationBarDuringPresentation = NO;
+		self.searchController.hidesNavigationBarDuringPresentation = YES;
 		
 		self.navigationItem.searchController = self.searchController;
 
