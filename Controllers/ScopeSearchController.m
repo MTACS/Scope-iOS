@@ -1,15 +1,15 @@
-#import "ScopeSettingsController.h"
+#import "ScopeSearchController.h"
 
-@interface ScopeSettingsController ()
+@interface ScopeSearchController ()
 @property (nonatomic, strong) UITableView *table;
 @end
 
-@implementation ScopeSettingsController
+@implementation ScopeSearchController
 - (void)loadView {
     [super loadView];
 
-    self.title = @"Scope";
-        self.navigationController.navigationBar.prefersLargeTitles = YES;
+    self.title = @"Search";
+    self.navigationController.navigationBar.prefersLargeTitles = YES;
 
     self.table = [[UITableView alloc] initWithFrame:self.view.frame style:UITableViewStyleInsetGrouped];
     self.table.delegate = self;
@@ -20,7 +20,7 @@
 	return 1;
 }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	return 1;
+	return 10;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	static NSString *CellIdentifier = @"Cell";

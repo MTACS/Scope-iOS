@@ -11,7 +11,7 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = Scope
 
-Scope_FILES = $(wildcard *.m)
+Scope_FILES = $(wildcard *.m) $(shell find Controllers -name '*.m') $(shell find Classes -name '*.m')
 Scope_FRAMEWORKS = UIKit CoreGraphics
 Scope_CFLAGS = -fobjc-arc
 
