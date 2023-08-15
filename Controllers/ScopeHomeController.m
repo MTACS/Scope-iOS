@@ -47,8 +47,14 @@
 	for (int i = 0; i < [sdks count]; i++) {
 		UIAction *item = [UIAction actionWithTitle:[sdks objectAtIndex:i] image:[UIImage systemImageNamed:@"chevron.left.forwardslash.chevron.right"] identifier:nil handler:^(__kindof UIAction *_Nonnull action) {
 			[[NSUserDefaults standardUserDefaults] setObject:[sdks objectAtIndex:i] forKey:@"selectedSDK"];
-			[_table reloadData];
+			[[NSUserDefaults standardUserDefaults] synchronize];
+			[self reloadTable];
 		}];
+		if ([item.title isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]]) {
+			item.state = UIMenuElementStateOn;
+		} else {
+			item.state = UIMenuElementStateOff;
+		}
 		[menuItems addObject:item];
 	}
 
@@ -116,5 +122,9 @@
 - (void)pushPathControllerWithPath:(NSString *)path {
 	ScopePathController *pathController = [[ScopePathController alloc] initWithPath:path title:path];
 	[self.navigationController pushViewController:pathController animated:YES];
+}
+- (void)reloadTable {
+	[_table reloadData];
+	self.selectorButton.menu = [self sdkMenu];
 }
 @end
