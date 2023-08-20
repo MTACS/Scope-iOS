@@ -6,12 +6,19 @@
 @end
 
 @implementation ScopeHomeController
+- (id)init {
+	self = [super init];
+	if (self) {
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateMainElements) name:@"ScopeReloadHome" object:nil];
+	}
+	return self;
+}
 - (void)loadView {
     [super loadView];
 
     self.title = @"Scope";
     self.navigationController.navigationBar.prefersLargeTitles = YES;
-    self.table = [[UITableView alloc] initWithFrame:self.view.frame style:UITableViewStyleInsetGrouped];
+    self.table = [[UITableView alloc] initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height - 60) style:UITableViewStyleInsetGrouped];
     self.table.delegate = self;
     self.table.dataSource = self;
     [self.view addSubview:self.table];
@@ -19,17 +26,25 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	self.headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 150)];
-    
+
 	self.selectorButton = [UIButton buttonWithType:UIButtonTypeSystem];
 	[self.selectorButton setTitle:@"Select SDK" forState:UIControlStateNormal];
 	[self.selectorButton setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
 	self.selectorButton.backgroundColor = [UIColor systemBlueColor];
-	self.selectorButton.menu = [self sdkMenu];
 	self.selectorButton.showsMenuAsPrimaryAction = YES;
     self.selectorButton.layer.cornerRadius = 10;
     self.selectorButton.layer.masksToBounds = YES;
 	self.selectorButton.translatesAutoresizingMaskIntoConstraints = NO;
+	[self updateMainElements];
 
+	/* self.warningLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+	self.warningLabel.translatesAutoresizingMaskIntoConstraints = NO;
+	self.warningLabel.textColor = [UIColor secondaryLabelColor];
+	self.warningLabel.text = @"No SDKs found. Open the Settings page to download SDKs";
+	self.warningLabel.numberOfLines = 2;
+	self.warningLabel.textAlignment = NSTextAlignmentCenter;
+
+	[self.view insertSubview:self.warningLabel aboveSubview:self.table]; */
 	[self.headerView addSubview:self.selectorButton];
 
 	[NSLayoutConstraint activateConstraints:@[
@@ -37,9 +52,21 @@
 		[self.selectorButton.heightAnchor constraintEqualToConstant:40],
 		[self.selectorButton.centerXAnchor constraintEqualToAnchor:self.headerView.centerXAnchor],
 		[self.selectorButton.centerYAnchor constraintEqualToAnchor:self.headerView.centerYAnchor constant:10],
+		/* [self.warningLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+		[self.warningLabel.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
+		[self.warningLabel.widthAnchor constraintEqualToConstant:300],
+		[self.warningLabel.heightAnchor constraintEqualToConstant:60], */
 	]];
 
 	self.table.tableHeaderView = self.headerView;
+}
+- (void)updateMainElements {
+	[self.table reloadData];
+	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:SDK_PATH error:nil];
+	if (sdks != nil) {
+		self.selectorButton.menu = [self sdkMenu];
+		// self.warningLabel.hidden = NO;
+	}
 }
 - (UIMenu *)sdkMenu {
 	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:SDK_PATH error:nil];
@@ -48,7 +75,7 @@
 		UIAction *item = [UIAction actionWithTitle:[sdks objectAtIndex:i] image:[UIImage systemImageNamed:@"chevron.left.forwardslash.chevron.right"] identifier:nil handler:^(__kindof UIAction *_Nonnull action) {
 			[[NSUserDefaults standardUserDefaults] setObject:[sdks objectAtIndex:i] forKey:@"selectedSDK"];
 			[[NSUserDefaults standardUserDefaults] synchronize];
-			[self reloadTable];
+			[self.table reloadData];
 		}];
 		if ([item.title isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]]) {
 			item.state = UIMenuElementStateOn;
@@ -104,7 +131,7 @@
 }
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
    	NSString *sdkRoot = [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"];
-	return sdkRoot;
+	return sdkRoot ? [NSString stringWithFormat:@"iOS %@", sdkRoot] : @"";
 }
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
 	UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 30)];

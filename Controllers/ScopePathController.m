@@ -1,6 +1,6 @@
 #import "ScopePathController.h"
 
-#define SDK_PATH @"/Library/Application Support/Scope/sdks/"
+#define SDK_PATH @"/var/mobile/Library/Preferences/Scope/"
 
 @interface ScopePathController ()
 @property (nonatomic, strong) UITableView *table;
@@ -19,6 +19,7 @@
 		self.searchController.delegate = self;
 		self.searchController.searchBar.delegate = self;
 		self.searchController.hidesNavigationBarDuringPresentation = YES;
+        self.searchController.obscuresBackgroundDuringPresentation = NO;
 		
 		self.navigationItem.searchController = self.searchController;
 
@@ -187,9 +188,14 @@
         UIContextualAction *setAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 			NSString *path = [NSString stringWithFormat:@"%@/%@", self.path, self.headers[indexPath.row]];
             NSMutableArray *favorites = [[[NSUserDefaults standardUserDefaults] objectForKey:@"favoriteHeaders"] mutableCopy] ?: [NSMutableArray new];
-            [favorites addObject:path];
-            [[NSUserDefaults standardUserDefaults] setObject:favorites forKey:@"favoriteHeaders"];
-		}];
+            if (![favorites containsObject:path]) {
+                [favorites insertObject:path atIndex:0];
+                [[NSUserDefaults standardUserDefaults] setObject:favorites forKey:@"favoriteHeaders"];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadFavorites" object:nil];
+            }
+            completionHandler(YES);
+        }];
 
 		setAction.backgroundColor = [UIColor tableCellGroupedBackgroundColor];
 		setAction.image = [UIImage systemImageNamed:@"star.fill"];

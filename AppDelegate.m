@@ -6,6 +6,7 @@
 
 @implementation AppDelegate
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
+    [self createDirectories];
 	_window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 
     self.tabBarController = [[UITabBarController alloc] init];
@@ -38,5 +39,13 @@
 	self.tabBarController.tabBar.translucent = NO;
     _window.rootViewController = self.tabBarController;
 	[_window makeKeyAndVisible];
+}
+- (void)createDirectories {
+    BOOL isDir;
+    NSString *directory = @"/var/mobile/Library/Preferences/Scope";
+	NSFileManager *fileManager = [NSFileManager defaultManager]; 
+	if (![fileManager fileExistsAtPath:directory isDirectory:&isDir]) {
+		[fileManager createDirectoryAtPath:directory withIntermediateDirectories:NO attributes:nil error:nil];	
+	}
 }
 @end

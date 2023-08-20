@@ -6,6 +6,8 @@
     if (self) {
         self.path = path;
         self.title = title;
+
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setFont) name:@"ScopeReloadFont" object:nil];
     }
     return self;
 }
@@ -23,8 +25,8 @@
 
     self.textStorage = [ScopeTextStorage new];
     self.textStorage.content = self.codeString;
-    self.textStorage.font = [UIFont systemFontOfSize:16];
-
+    [self setFont];
+    
     ScopeLayoutManager *layoutManager = [ScopeLayoutManager new];
     layoutManager.lineHeight = 1.1;
     [self.textStorage addLayoutManager: layoutManager];
@@ -55,5 +57,9 @@
         [self.textView.trailingAnchor constraintEqualToAnchor:self.textContainerScrollView.trailingAnchor],
         [self.textView.bottomAnchor constraintEqualToAnchor:self.textContainerScrollView.bottomAnchor],
     ]];
+}
+- (void)setFont {
+    NSInteger fontSize = [[[NSUserDefaults standardUserDefaults] objectForKey:@"fontSize"] integerValue] ?: 16;
+    self.textStorage.font = [UIFont systemFontOfSize:fontSize];
 }
 @end
