@@ -16,5 +16,6 @@ Scope_FRAMEWORKS = UIKit CoreGraphics
 Scope_PRIVATE_FRAMEWORKS = OnBoardingKit
 Scope_LDFLAGS = Frameworks/libbz2.1.0.tbd Frameworks/libz.1.tbd Frameworks/libiconv.2.tbd
 Scope_CFLAGS = -fobjc-arc -Wdeprecated-declarations -Wno-deprecated-declarations -Wno-unused-but-set-variable -I../ZipArchive -DCOCOAPODS=1 -DPRIx64=\"llx\" -DHAVE_PKCRYPT -DHAVE_STDINT_H -DHAVE_WZAES -DHAVE_ZLIB
+Scope_CODESIGN_FLAGS = -Sentitlements.plist
 
 include $(THEOS_MAKE_PATH)/application.mk

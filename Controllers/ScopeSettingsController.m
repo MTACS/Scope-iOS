@@ -102,13 +102,19 @@ NSUserDefaults *defaults;
 }
 - (void)hideProgressView {
 	self.headerView.hidden = YES;
+	[self.table reloadData];
 }
 - (void)showBackgroundAlert {
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:@"Downloads will not continue if the app is in the background. Please keep the app open until the download/extraction is complete" preferredStyle:UIAlertControllerStyleAlert];
 	UIAlertAction *dismiss = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 		
 	}];
+	UIAlertAction *doNotShow = [UIAlertAction actionWithTitle:@"Don't Show Again" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+		[defaults setBool:YES forKey:@"noBackgroundAlert"];
+        [defaults synchronize];
+	}];
 	[alert addAction:dismiss];
+	[alert addAction:doNotShow];
 	[self presentViewController:alert animated:YES completion:nil];
 }
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -227,11 +233,16 @@ NSUserDefaults *defaults;
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
 	UISwipeActionsConfiguration *swipeActions;
 	if (indexPath.section == 0) {
+		
 		NSString *sdkIndex = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [self.saveURLS[indexPath.row] stringByDeletingPathExtension]];
 		BOOL exists = [fileManager fileExistsAtPath:sdkIndex];
 
 		UIContextualAction *removeAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
-			[fileManager removeItemAtPath:sdkIndex error:nil];
+			NSError *err = nil;
+			[fileManager removeItemAtPath:sdkIndex error:&err];
+			if (err) {
+				NSLog(@"[+] SCOPE DEBUG: Error -> %@", err);
+			}
 			[defaults removeObjectForKey:@"selectedSDK"];
 			[self.table reloadData];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadHome" object:nil];
@@ -268,7 +279,9 @@ NSUserDefaults *defaults;
 	UITableViewCell *cell = (UITableViewCell *)sender.superview;
     NSInteger index = cell.tag;
 	BOOL exists = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [self.saveURLS[index] stringByDeletingPathExtension]]];
-	[self showBackgroundAlert];
+	if (![[defaults objectForKey:@"noBackgroundAlert"] boolValue]) {
+		[self showBackgroundAlert];
+	}
     if (!exists) {
 		[self downloadItem:cell.tag destination:[self.saveURLS objectAtIndex:index]];
 	}
@@ -276,12 +289,15 @@ NSUserDefaults *defaults;
 - (void)cancelDownload {
 	[_session invalidateAndCancel];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeHideProgress" object:nil];
-
-	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	NSError *err;
+	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:&err];
 	for (NSString *pathItem in pathItems) {
 		if ([pathItem.pathExtension isEqualToString:@"zip"]) {
-			[fileManager removeItemAtPath:[ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem] error:nil];
+			[fileManager removeItemAtPath:[ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem] error:&err];
 		}
+	}
+	if (err) {
+		NSLog(@"[+] SCOPE DEBUG: Error -> %@", err);
 	}
 }
 - (void)fontSizeChanged:(UIStepper *)stepper {
@@ -357,11 +373,17 @@ NSUserDefaults *defaults;
 }
 - (void)downloadItem:(NSInteger)index destination:(NSString *)path {
     self.downloadPath = path;
-	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	NSError *err;
+	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:&err];
 	for (NSString *pathItem in pathItems) {
 		if ([pathItem.pathExtension isEqualToString:@"zip"]) {
-			[fileManager removeItemAtPath:[ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem] error:nil];
+			NSString *removePath = [ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem];
+			[fileManager removeItemAtPath:removePath error:&err];
 		}
+	}
+
+	if (err) {
+		NSLog(@"[+] SCOPE DEBUG: Error -> %@", err);
 	}
 
    	NSURL *source;
@@ -396,14 +418,16 @@ NSUserDefaults *defaults;
 	});
 }
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-
+	if (error) {
+		NSLog(@"[+] SCOPE DEBUG: Error -> %@", error.localizedDescription);
+	}
 }
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didResumeAtOffset:(int64_t)fileOffset expectedTotalBytes:(int64_t)expectedTotalBytes {
 
 }
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location {
     NSError *err;
-    NSString *finalPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), self.downloadPath];
+	NSString *finalPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), self.downloadPath];
     [fileManager copyItemAtURL:location toURL:[NSURL fileURLWithPath:finalPath] error:&err];
     if (err) {
         [self.headerLabel setText:@"Download Error"];
@@ -430,6 +454,10 @@ NSUserDefaults *defaults;
 	});
 }
 - (void)zipArchiveDidUnzipArchiveAtPath:(NSString *)path zipInfo:(unz_global_info)zipInfo unzippedPath:(NSString *)unzippedPath {
-    [fileManager removeItemAtPath:path error:nil];
+    NSError *err;
+	[fileManager removeItemAtPath:path error:&err];
+	if (err) {
+		NSLog(@"[+] SCOPE DEBUG: Error -> %@", err);
+	}
 }
 @end

@@ -62,12 +62,6 @@
 	<array>
 		<string>armv7</string>
 	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Location is required to keep Scope open in the background only for allowing download tasks to continue. No location information is collected or shared.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

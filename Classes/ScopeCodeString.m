@@ -25,7 +25,7 @@
 - (void)enumerateCodeInRange:(NSRange)range usingBlock:(void (^)(NSRange range, ScopeCodeType type))block {
     block(range, ScopeCodeTypeText);
     
-    NSDictionary *components = [NSDictionary dictionaryWithContentsOfFile:@"/Applications/Scope.app/objc.plist"][@"components"];
+    NSDictionary *components = [NSDictionary dictionaryWithContentsOfFile:ROOT_PATH_NS(@"/Applications/Scope.app/objc.plist")][@"components"];
     
     for (NSString *key in components) {
         NSDictionary *dict = components[key];
