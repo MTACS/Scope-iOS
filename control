@@ -1,8 +1,8 @@
 Package: com.mtac.scope
 Name: Scope
-Version: 0.0.1
+Version: 1.0
 Architecture: iphoneos-arm
-Description: An awesome application!
+Description: View & manage iOS Runtime headers directly from your device
 Maintainer: MTAC
 Author: MTAC
 Section: Utilities

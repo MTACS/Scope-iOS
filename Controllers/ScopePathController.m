@@ -76,6 +76,7 @@
     self.table = [[UITableView alloc] initWithFrame:self.view.frame style:UITableViewStyleInsetGrouped];
     self.table.delegate = self;
     self.table.dataSource = self;
+    self.table.separatorColor = [UIColor clearColor];
     [self.view addSubview:self.table];
 }
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

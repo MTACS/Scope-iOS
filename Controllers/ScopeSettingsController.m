@@ -50,6 +50,7 @@ NSUserDefaults *defaults;
     self.table = [[UITableView alloc] initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height - 60) style:UITableViewStyleInsetGrouped];
     self.table.delegate = self;
     self.table.dataSource = self;
+	self.table.separatorColor = [UIColor clearColor];
     [self.view addSubview:self.table];
 
 	self.headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 60)];
@@ -370,6 +371,33 @@ NSUserDefaults *defaults;
 		return 40;
 	}
 	return 10;
+}
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+	NSInteger sections = [self numberOfSectionsInTableView:tableView];
+	if (section == sections - 1) {
+		UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(([UIScreen mainScreen].bounds.size.width / 2) - 100, 0, 200, 100)];
+		titleLabel.numberOfLines = 2;
+		titleLabel.textColor = [UIColor secondaryLabelColor];
+		titleLabel.textAlignment = NSTextAlignmentCenter;
+		
+		NSString *primary = @"Scope";
+		NSString *secondary = @"v1.0 © D.F. (MTAC)";
+
+		NSMutableAttributedString *final = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n%@", primary, secondary]];
+		[final addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:18 weight:UIFontWeightSemibold] range:[final.string rangeOfString:primary]];
+		[final addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:12 weight:UIFontWeightRegular] range:[final.string rangeOfString:secondary]];
+
+		titleLabel.attributedText = final;
+		return titleLabel;
+	}
+	return nil;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    NSInteger sections = [self numberOfSectionsInTableView:tableView];
+	if (section == sections - 1) {
+		return 100;
+	}
+	return 0;
 }
 - (void)downloadItem:(NSInteger)index destination:(NSString *)path {
     self.downloadPath = path;

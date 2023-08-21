@@ -26,8 +26,6 @@
 - (void)loadView {
     [super loadView];
 
-	// [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:@"com.mtac.scope"];
-
     self.title = @"Search";
    
 	self.headerResults = [NSMutableArray new];
@@ -38,6 +36,7 @@
 	self.table.translatesAutoresizingMaskIntoConstraints = NO;
 	self.table.delegate = self;
 	self.table.dataSource = self;
+	self.table.separatorColor = [UIColor clearColor];
 	[self.view addSubview:self.table];
 
 	UIView *segmentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 50)];

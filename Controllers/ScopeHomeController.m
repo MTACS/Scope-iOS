@@ -18,10 +18,13 @@
     [super loadView];
 
     self.title = @"Scope";
+	self.tabBarItem.title = @"";
+
     self.navigationController.navigationBar.prefersLargeTitles = YES;
     self.table = [[UITableView alloc] initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height - 60) style:UITableViewStyleInsetGrouped];
     self.table.delegate = self;
     self.table.dataSource = self;
+	self.table.separatorColor = [UIColor clearColor];
     [self.view addSubview:self.table];
 }
 - (void)viewDidLoad {
