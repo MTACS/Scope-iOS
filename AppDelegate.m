@@ -1,4 +1,5 @@
 #import "AppDelegate.h"
+#import <rootless.h>
 #import "./Controllers/ScopeHomeController.h"
 #import "./Controllers/ScopeSettingsController.h"
 #import "./Controllers/ScopeSearchController.h"
@@ -42,7 +43,7 @@
 }
 - (void)createDirectories {
     BOOL isDir;
-    NSString *directory = @"/var/mobile/Library/Preferences/Scope";
+    NSString *directory = ROOT_PATH_NS(@"/var/mobile/Library/Preferences/Scope");
 	NSFileManager *fileManager = [NSFileManager defaultManager]; 
 	if (![fileManager fileExistsAtPath:directory isDirectory:&isDir]) {
 		[fileManager createDirectoryAtPath:directory withIntermediateDirectories:NO attributes:nil error:nil];	

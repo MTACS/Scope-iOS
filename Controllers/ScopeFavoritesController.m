@@ -1,4 +1,5 @@
 #import "ScopeFavoritesController.h"
+#import <rootless.h>
 
 #define SDK_PATH @"/var/mobile/Library/Preferences/Scope/"
 
@@ -42,7 +43,7 @@
 
 	NSArray *favorites = [[NSUserDefaults standardUserDefaults] objectForKey:@"favoriteHeaders"];
 	NSString *item = [favorites objectAtIndex:indexPath.row];
-	NSArray *components = [[item stringByReplacingOccurrencesOfString:SDK_PATH withString:@""] componentsSeparatedByString:@"/"];
+	NSArray *components = [[item stringByReplacingOccurrencesOfString:ROOT_PATH_NS(SDK_PATH) withString:@""] componentsSeparatedByString:@"/"];
 
 	UIListContentConfiguration *content = [cell defaultContentConfiguration];
     [content setImage:[UIImage systemImageNamed:@"doc.plaintext.fill"]];

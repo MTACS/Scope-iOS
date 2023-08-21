@@ -1,4 +1,5 @@
 #import "ScopeSearchController.h"
+#import <rootless.h>
 
 #define SDK_PATH @"/var/mobile/Library/Preferences/Scope/"
 
@@ -155,9 +156,9 @@
 	NSString *path;
 	NSString *sdk = [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"];
 	if (indexPath.section == 0) {
-		path = [NSString stringWithFormat:@"%@%@/%@", SDK_PATH, sdk, [self.headerResults objectAtIndex:indexPath.row]];
+		path = [NSString stringWithFormat:@"%@%@/%@", ROOT_PATH_NS(SDK_PATH), sdk, [self.headerResults objectAtIndex:indexPath.row]];
 	} else if (indexPath.section == 2) {
-		path = [NSString stringWithFormat:@"%@%@/%@", SDK_PATH, sdk, [self.protocolResults objectAtIndex:indexPath.row]];
+		path = [NSString stringWithFormat:@"%@%@/%@", ROOT_PATH_NS(SDK_PATH), sdk, [self.protocolResults objectAtIndex:indexPath.row]];
 	} else if (indexPath.section == 1) {
 		return nil;
 	}
@@ -186,14 +187,14 @@
 	NSString *path;
 	NSString *sdk = [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"];
 	if (self.searchSegment.selectedSegmentIndex == 0) {
-		path = [NSString stringWithFormat:@"%@%@/%@", SDK_PATH, sdk, [self.headerResults objectAtIndex:indexPath.row]];
+		path = [NSString stringWithFormat:@"%@%@/%@", ROOT_PATH_NS(SDK_PATH), sdk, [self.headerResults objectAtIndex:indexPath.row]];
 		ScopeFileViewController *fileViewController = [[ScopeFileViewController alloc] initWithPath:path title:[path lastPathComponent]];
         [self.navigationController pushViewController:fileViewController animated:YES];
 	} else if (self.searchSegment.selectedSegmentIndex == 1) {
-		path = [NSString stringWithFormat:@"%@%@/%@", SDK_PATH, sdk, [self.frameworkResults objectAtIndex:indexPath.row]];
+		path = [NSString stringWithFormat:@"%@%@/%@", ROOT_PATH_NS(SDK_PATH), sdk, [self.frameworkResults objectAtIndex:indexPath.row]];
 		[self.navigationController pushViewController:[ScopePathController pathControllerWithPath:path title:[[path lastPathComponent] stringByDeletingPathExtension]] animated:YES];
 	} else if (self.searchSegment.selectedSegmentIndex == 2) {
-		path = [NSString stringWithFormat:@"%@%@/%@", SDK_PATH, sdk, [self.protocolResults objectAtIndex:indexPath.row]];
+		path = [NSString stringWithFormat:@"%@%@/%@", ROOT_PATH_NS(SDK_PATH), sdk, [self.protocolResults objectAtIndex:indexPath.row]];
 		ScopeFileViewController *fileViewController = [[ScopeFileViewController alloc] initWithPath:path title:[path lastPathComponent]];
         [self.navigationController pushViewController:fileViewController animated:YES];
 	}
@@ -251,7 +252,7 @@
 	NSMutableArray *protocols = [NSMutableArray new];
 
 	if (![query isEqualToString:@""]) {
-		NSString *basePath = [NSString stringWithFormat:@"%@/%@", SDK_PATH, [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
+		NSString *basePath = [NSString stringWithFormat:@"%@/%@", ROOT_PATH_NS(SDK_PATH), [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
 		NSString *file;
 		NSFileManager *manager = [[NSFileManager alloc] init];
 		NSDirectoryEnumerator *enumerator = [manager enumeratorAtPath:basePath];

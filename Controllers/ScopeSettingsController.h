@@ -9,6 +9,7 @@
 @property (nonatomic, strong) UIView *headerView;
 @property (nonatomic, strong) UILabel *headerLabel;
 @property (nonatomic, strong) UIProgressView *progressView;
+- (void)hideProgressView;
 @end
 
 @interface UIColor (Scope) 

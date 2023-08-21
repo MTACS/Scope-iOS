@@ -1,6 +1,10 @@
 #import "ScopeSettingsController.h"
-
+#import <rootless.h>
 #define SDK_PATH @"/var/mobile/Library/Preferences/Scope/"
+
+@import SafariServices;
+NSFileManager *fileManager;
+NSUserDefaults *defaults;
 
 @interface ScopeSettingsController ()
 @property (nonatomic, strong) UITableView *table;
@@ -24,15 +28,20 @@
 			@"15.0.zip",
 			@"16.0.zip"
 		];
+
+		fileManager = [NSFileManager defaultManager];
+		defaults = [NSUserDefaults standardUserDefaults];
+
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(hideProgressView) name:@"ScopeHideProgress" object:nil];
 	}
 	return self;
 }
 - (void)loadView {
     [super loadView];
 
-	if (![[NSUserDefaults standardUserDefaults] objectForKey:@"fontSize"]) {
-		[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:16] forKey:@"fontSize"];
-		[[NSUserDefaults standardUserDefaults] synchronize];
+	if (![defaults objectForKey:@"fontSize"]) {
+		[defaults setObject:[NSNumber numberWithInt:16] forKey:@"fontSize"];
+		[defaults synchronize];
 	}
 
     self.title = @"Settings";
@@ -91,8 +100,19 @@
     self.headerView.hidden = YES;
 	self.table.tableHeaderView = self.headerView;
 }
+- (void)hideProgressView {
+	self.headerView.hidden = YES;
+}
+- (void)showBackgroundAlert {
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:@"Downloads will not continue if the app is in the background. Please keep the app open until the download/extraction is complete" preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertAction *dismiss = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+		
+	}];
+	[alert addAction:dismiss];
+	[self presentViewController:alert animated:YES completion:nil];
+}
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	return 4;
+	return 5;
 }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	NSInteger rows = 0;
@@ -107,7 +127,10 @@
 			rows = 1;
 			break;
 		case 3:
-			rows = 2;
+            rows = 1;
+            break;
+		case 4:
+			rows = 3;
 			break;
 	}
 	return rows;
@@ -140,7 +163,7 @@
 				break;
 		}
 
-		BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", SDK_PATH, [self.saveURLS[indexPath.row] stringByDeletingPathExtension]]];
+		BOOL exists = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [self.saveURLS[indexPath.row] stringByDeletingPathExtension]]];
 
 		UIButton *downloadButton = [UIButton buttonWithType:UIButtonTypeCustom];
 		[downloadButton setFrame:CGRectMake(0, 0, 30, 30)];
@@ -152,7 +175,7 @@
 
 		cellImage = [UIImage systemImageNamed:@"shippingbox.fill"];
 	} else if (indexPath.section == 1) {
-		NSInteger fontSize = [[[NSUserDefaults standardUserDefaults] objectForKey:@"fontSize"] integerValue];
+		NSInteger fontSize = [[defaults objectForKey:@"fontSize"] integerValue];
 		
 		title = [NSString stringWithFormat:@"Font Size: %ld", fontSize];
 		subtitle = @"Swipe left to reset";
@@ -164,20 +187,30 @@
 		[fontStepper addTarget:self action:@selector(fontSizeChanged:) forControlEvents:UIControlEventValueChanged];  
 		cell.accessoryView = fontStepper;
 
-		cellImage = [UIImage systemImageNamed:@"doc.plaintext.fill"];
+		cellImage = [UIImage systemImageNamed:@"textformat"];
 	} else if (indexPath.section == 2) {
 		title = @"Reset";
 		subtitle = @"Restore all settings";
 		cellImage = [UIImage systemImageNamed:@"arrow.clockwise.circle.fill"];
 	} else if (indexPath.section == 3) {
 		if (indexPath.row == 0) {
+			title = @"D.F. (MTAC)";
+			subtitle = @"https://twitter.com/mtac8";
+			cellImage = [UIImage systemImageNamed:@"person.circle.fill"];
+		}
+	} else if (indexPath.section == 4) {
+		if (indexPath.row == 0) {
+			title = @"Source Code";
+			subtitle = @"https://github.com/MTACS/Scope-iOS";
+			cellImage = [UIImage systemImageNamed:@"safari.fill"];
+		} else if (indexPath.row == 1) {
 			title = @"Syntax Highlighting";
 			subtitle = @"https://github.com/Skittyblock/FilzaPlus";
-			cellImage = [UIImage systemImageNamed:@"link"];
-		} else if (indexPath.row == 1) {
+			cellImage = [UIImage systemImageNamed:@"paintbrush.pointed.fill"];
+		} else if (indexPath.row == 2) {
 			title = @"Unarchiving";
 			subtitle = @"https://github.com/ZipArchive/ZipArchive";
-			cellImage = [UIImage systemImageNamed:@"link"];
+			cellImage = [UIImage systemImageNamed:@"doc.plaintext.fill"];
 		}
 	}
 
@@ -194,12 +227,12 @@
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
 	UISwipeActionsConfiguration *swipeActions;
 	if (indexPath.section == 0) {
-		NSString *sdkIndex = [NSString stringWithFormat:@"%@%@", SDK_PATH, [self.saveURLS[indexPath.row] stringByDeletingPathExtension]];
-		BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:sdkIndex];
+		NSString *sdkIndex = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [self.saveURLS[indexPath.row] stringByDeletingPathExtension]];
+		BOOL exists = [fileManager fileExistsAtPath:sdkIndex];
 
 		UIContextualAction *removeAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
-			[[NSFileManager defaultManager] removeItemAtPath:sdkIndex error:nil];
-			[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"selectedSDK"];
+			[fileManager removeItemAtPath:sdkIndex error:nil];
+			[defaults removeObjectForKey:@"selectedSDK"];
 			[self.table reloadData];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadHome" object:nil];
 			completionHandler(YES);
@@ -214,8 +247,8 @@
 		return exists ? swipeActions : nil;
 	} else if (indexPath.section == 1) {
         UIContextualAction *resetAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
-			[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:16] forKey:@"fontSize"];
-			[[NSUserDefaults standardUserDefaults] synchronize];
+			[defaults setObject:[NSNumber numberWithInt:16] forKey:@"fontSize"];
+			[defaults synchronize];
 			[_table reloadData];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadFont" object:nil];
             completionHandler(YES);
@@ -234,31 +267,58 @@
 - (void)downloadButtonClicked:(UIButton *)sender {
 	UITableViewCell *cell = (UITableViewCell *)sender.superview;
     NSInteger index = cell.tag;
-	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", SDK_PATH, [self.saveURLS[index] stringByDeletingPathExtension]]];
-
+	BOOL exists = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [self.saveURLS[index] stringByDeletingPathExtension]]];
+	[self showBackgroundAlert];
     if (!exists) {
 		[self downloadItem:cell.tag destination:[self.saveURLS objectAtIndex:index]];
 	}
 }
 - (void)cancelDownload {
 	[_session invalidateAndCancel];
-	self.headerView.hidden = YES;
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeHideProgress" object:nil];
+
+	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	for (NSString *pathItem in pathItems) {
+		if ([pathItem.pathExtension isEqualToString:@"zip"]) {
+			[fileManager removeItemAtPath:[ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem] error:nil];
+		}
+	}
 }
 - (void)fontSizeChanged:(UIStepper *)stepper {
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:(int)stepper.value] forKey:@"fontSize"];
+    [defaults setObject:[NSNumber numberWithInt:(int)stepper.value] forKey:@"fontSize"];
 	[_table reloadData];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadFont" object:nil];
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
+
 	if (indexPath.section == 2) {
 		if (indexPath.row == 0) {
-			[[NSUserDefaults standardUserDefaults] removePersistentDomainForName:@"com.mtac.scope"];
-			[[NSUserDefaults standardUserDefaults] synchronize];
+			[defaults removePersistentDomainForName:@"com.mtac.scope"];
+			[defaults synchronize];
 			UIApplication *app = [UIApplication sharedApplication];
             [app performSelector:@selector(suspend)];
 			exit(0);
 		}
+	} else if (indexPath.section == 3) {
+		if (indexPath.row == 0) {
+			[[NSBundle bundleWithPath:ROOT_PATH_NS(@"/System/Library/Frameworks/SafariServices.framework")] load];
+			if ([SFSafariViewController class] != nil) {
+				SFSafariViewController *safariView = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"https://twitter.com/mtac8"]];
+				[self.navigationController presentViewController:safariView animated:YES completion:nil];
+			}
+		}
+	} else if (indexPath.section == 4) {
+		[[NSBundle bundleWithPath:ROOT_PATH_NS(@"/System/Library/Frameworks/SafariServices.framework")] load];
+		SFSafariViewController *safariView;
+		if (indexPath.row == 0) {
+			safariView = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"https://github.com/MTACS/Scope-iOS"]];
+		} else if (indexPath.row == 1) {
+			safariView = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"https://github.com/Skittyblock/FilzaPlus"]];
+		} else if (indexPath.row == 2) {
+			safariView = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"https://github.com/ZipArchive/ZipArchive"]];
+		}
+		[self.navigationController presentViewController:safariView animated:YES completion:nil];
 	}
 }
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -274,8 +334,11 @@
             title = @"Reset";
             break;
         case 3:
-			title = @"Libraries";
+			title = @"About";
 			break;
+		case 4:
+            title = @"Source Code";
+            break;
 	}
 	return title;
 }
@@ -294,6 +357,13 @@
 }
 - (void)downloadItem:(NSInteger)index destination:(NSString *)path {
     self.downloadPath = path;
+	NSArray *pathItems = [fileManager contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	for (NSString *pathItem in pathItems) {
+		if ([pathItem.pathExtension isEqualToString:@"zip"]) {
+			[fileManager removeItemAtPath:[ROOT_PATH_NS(SDK_PATH) stringByAppendingPathComponent:pathItem] error:nil];
+		}
+	}
+
    	NSURL *source;
     switch (index) {
         case 0:
@@ -333,8 +403,8 @@
 }
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location {
     NSError *err;
-    NSString *finalPath = [NSString stringWithFormat:@"%@%@", SDK_PATH, self.downloadPath];
-    [[NSFileManager defaultManager] copyItemAtURL:location toURL:[NSURL fileURLWithPath:finalPath] error:&err];
+    NSString *finalPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), self.downloadPath];
+    [fileManager copyItemAtURL:location toURL:[NSURL fileURLWithPath:finalPath] error:&err];
     if (err) {
         [self.headerLabel setText:@"Download Error"];
     } else {
@@ -343,7 +413,7 @@
     }
 }
 - (void)unzipItem:(NSString *)path {
-    [SSZipArchive unzipFileAtPath:path toDestination:SDK_PATH delegate:self];
+    [SSZipArchive unzipFileAtPath:path toDestination:ROOT_PATH_NS(SDK_PATH) delegate:self];
 }
 - (void)zipArchiveProgressEvent:(unsigned long long)loaded total:(unsigned long long)total {
     dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
@@ -352,13 +422,14 @@
 		dispatch_async(dispatch_get_main_queue(), ^(void){
 			[self.progressView setProgress:progress animated:YES];
 			[self.headerLabel setText:[NSString stringWithFormat:@"Extracting: %2.f%%", progress * 100]];
+			if (progress == 1.0) {
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeHideProgress" object:nil];
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadHome" object:nil];
+			}
 		});
 	});
 }
 - (void)zipArchiveDidUnzipArchiveAtPath:(NSString *)path zipInfo:(unz_global_info)zipInfo unzippedPath:(NSString *)unzippedPath {
-    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-	self.headerView.hidden = YES;
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"ScopeReloadHome" object:nil];
+    [fileManager removeItemAtPath:path error:nil];
 }
-
 @end

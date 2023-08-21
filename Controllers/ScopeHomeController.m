@@ -1,5 +1,6 @@
 #import "ScopeHomeController.h"
 #import "ScopePathController.h"
+#import <rootless.h>
 
 @interface ScopeHomeController ()
 @property (nonatomic, strong) UITableView *table;
@@ -37,14 +38,6 @@
 	self.selectorButton.translatesAutoresizingMaskIntoConstraints = NO;
 	[self updateMainElements];
 
-	/* self.warningLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-	self.warningLabel.translatesAutoresizingMaskIntoConstraints = NO;
-	self.warningLabel.textColor = [UIColor secondaryLabelColor];
-	self.warningLabel.text = @"No SDKs found. Open the Settings page to download SDKs";
-	self.warningLabel.numberOfLines = 2;
-	self.warningLabel.textAlignment = NSTextAlignmentCenter;
-
-	[self.view insertSubview:self.warningLabel aboveSubview:self.table]; */
 	[self.headerView addSubview:self.selectorButton];
 
 	[NSLayoutConstraint activateConstraints:@[
@@ -52,24 +45,25 @@
 		[self.selectorButton.heightAnchor constraintEqualToConstant:40],
 		[self.selectorButton.centerXAnchor constraintEqualToAnchor:self.headerView.centerXAnchor],
 		[self.selectorButton.centerYAnchor constraintEqualToAnchor:self.headerView.centerYAnchor constant:10],
-		/* [self.warningLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-		[self.warningLabel.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
-		[self.warningLabel.widthAnchor constraintEqualToConstant:300],
-		[self.warningLabel.heightAnchor constraintEqualToConstant:60], */
 	]];
 
 	self.table.tableHeaderView = self.headerView;
+
+	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	if (sdks.count == 0) {
+		[self performSelector:@selector(showSDKWarning) withObject:nil afterDelay:1];
+	} 
 }
 - (void)updateMainElements {
 	[self.table reloadData];
-	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:SDK_PATH error:nil];
-	if (sdks != nil) {
+	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil];
+	if (sdks.count != 0) {
 		self.selectorButton.menu = [self sdkMenu];
-		// self.warningLabel.hidden = NO;
 	}
 }
 - (UIMenu *)sdkMenu {
-	NSArray *sdks = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:SDK_PATH error:nil];
+	NSArray *sdkItems = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:ROOT_PATH_NS(SDK_PATH) error:nil] copy];
+	NSArray *sdks = [sdkItems sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 	NSMutableArray *menuItems = [[NSMutableArray alloc] init];
 	for (int i = 0; i < [sdks count]; i++) {
 		UIAction *item = [UIAction actionWithTitle:[sdks objectAtIndex:i] image:[UIImage systemImageNamed:@"chevron.left.forwardslash.chevron.right"] identifier:nil handler:^(__kindof UIAction *_Nonnull action) {
@@ -88,17 +82,46 @@
 	UIMenu *menuActions = [UIMenu menuWithTitle:@"" children:menuItems];
 	return menuActions;
 }
+- (void)showSDKWarning {
+	self.warningController = [[OBWelcomeController alloc] initWithTitle:@"Scope" detailText:@"" icon:[UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Applications/Scope.app/AppIcon-Rounded.png")]];
+	[self.warningController addBulletedListItemWithTitle:@"No SDKs Found" description:@"Open settings to download SDKs" image:[UIImage systemImageNamed:@"shippingbox.fill"]];
+    
+	OBTrayButton *confirm = [OBTrayButton buttonWithType:0];
+	[confirm addTarget:self action:@selector(openSettings) forControlEvents:UIControlEventTouchUpInside];
+	[confirm setTitle:@"Open Settings" forState:UIControlStateNormal];
+	[confirm setClipsToBounds:YES];
+	[confirm setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+	[confirm setBackgroundColor:[UIColor systemBlueColor]];
+	[confirm.layer setCornerRadius:12];
+	[self.warningController.buttonTray addButton:confirm];
+
+	self.warningController.buttonTray.effectView.effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
+    UIVisualEffectView *effectWelcomeView = [[UIVisualEffectView alloc] initWithFrame:self.warningController.viewIfLoaded.bounds];
+    effectWelcomeView.effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
+    
+	[self.warningController.viewIfLoaded insertSubview:effectWelcomeView atIndex:0];
+    self.warningController.viewIfLoaded.backgroundColor = [UIColor clearColor];
+    self.warningController.modalPresentationStyle = UIModalPresentationPageSheet;
+    self.warningController.modalInPresentation = NO;
+	self.warningController._shouldInlineButtontray = NO;
+    [self presentViewController:self.warningController animated:YES completion:nil];
+}
+- (void)openSettings {
+	UITabBarController *tabBarController = (UITabBarController *)[[UIApplication sharedApplication].keyWindow rootViewController];
+	[tabBarController setSelectedIndex:3];
+	[self.warningController dismissViewControllerAnimated:YES completion:nil];
+}
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
 	return 1;
 }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", SDK_PATH, [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
+	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *rootItems = [manager contentsOfDirectoryAtPath:sdkRootPath error:nil];
 	return rootItems.count;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", SDK_PATH, [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
+	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *rootItems = [manager contentsOfDirectoryAtPath:sdkRootPath error:nil];
 	
@@ -122,7 +145,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 
-	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", SDK_PATH, [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
+	NSString *sdkRootPath = [NSString stringWithFormat:@"%@%@", ROOT_PATH_NS(SDK_PATH), [[NSUserDefaults standardUserDefaults] objectForKey:@"selectedSDK"]];
 	NSFileManager *manager = [NSFileManager defaultManager];
 	NSArray *rootItems = [manager contentsOfDirectoryAtPath:sdkRootPath error:nil];
 
