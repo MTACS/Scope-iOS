@@ -21,11 +21,19 @@
 	self.tabBarItem.title = @"";
 
     self.navigationController.navigationBar.prefersLargeTitles = YES;
-    self.table = [[UITableView alloc] initWithFrame:CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height - 60) style:UITableViewStyleInsetGrouped];
-    self.table.delegate = self;
+    self.table = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
+    self.table.translatesAutoresizingMaskIntoConstraints = NO;
+	self.table.delegate = self;
     self.table.dataSource = self;
 	self.table.separatorColor = [UIColor clearColor];
     [self.view addSubview:self.table];
+
+	[NSLayoutConstraint activateConstraints:@[
+		[self.table.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+		[self.table.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+		[self.table.leftAnchor constraintEqualToAnchor:self.view.leftAnchor],
+		[self.table.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
+	]];
 }
 - (void)viewDidLoad {
 	[super viewDidLoad];
